@@ -55,7 +55,10 @@ public class Server {
 		if (jogoEmEspera == null || jogoEmEspera.getStatus() == Status.FINALIZADO) {
 			jogoEmEspera = new Jogo();
 		}
-		return jogoEmEspera;
+		if (jogoEmEspera.getStatus() == Status.AGUARDANDO_JOGADORES) {
+			return jogoEmEspera;
+		}
+		return null;
 	}
 	
 }

@@ -31,12 +31,12 @@ public class PlayerInputThread extends Thread {
 			String mensagemRecebida = jogador.getEntrada().readLine();
 			jogador.setNome(mensagemRecebida);
 			quandoProntoAction.verificarInicio();
-			while (!(mensagemRecebida == null || mensagemRecebida.isEmpty())) {
+			while (!(mensagemRecebida == null)) {
 				mensagemRecebida = jogador.getEntrada().readLine();
 				
-				if (mensagemRecebida.equalsIgnoreCase(SAIR)) {
+				if (mensagemRecebida == null || mensagemRecebida.equalsIgnoreCase(SAIR)) {
 					sairAction.sair(jogador);
-					return;
+					break;
 				}
 				
 				try {

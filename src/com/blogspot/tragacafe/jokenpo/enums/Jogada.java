@@ -15,11 +15,10 @@ public enum Jogada {
 	
 	private Jogada perdePara() {
 		switch (this) {
-		case PEDRA:    return PAPEL;
-		case PAPEL:    return TESOURA;
-		default:
+		case PEDRA: return PAPEL;
+		case PAPEL: return TESOURA;
+		default:    return PEDRA;
 		}
-		return PEDRA;
 	}
 	
 }

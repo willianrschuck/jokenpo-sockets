@@ -13,7 +13,7 @@ public class Jogo {
 	private Jogador jogadorUm;
 	private Jogador jogadorDois;
 	
-	private int rodadasRestantes = 3;
+	private int rodadasRestantes = 4;
 	
 	private QuandoProntoAction quandoProntoAction = () -> { verificarInicio(); };
 	private JogarAction jogarAction = (jogador, jogada) -> { realizarJogada(jogador, jogada); };
@@ -27,20 +27,29 @@ public class Jogo {
 	 * As threads administram a entrada de dados e podem chamar
 	 * ações predefinidas dentro desta classe Jogo */
 	public void iniciarJogo() {
-		new PlayerInputThread(jogadorUm, jogarAction, quandoProntoAction, sairAction).start();
-		new PlayerInputThread(jogadorDois, jogarAction, quandoProntoAction, sairAction).start();
+		status = Status.INICIADO;
+	}
+	
+	private void criarThreadJogador(Jogador jogador) {
+		new PlayerInputThread(jogador, jogarAction, quandoProntoAction, sairAction).start();
 	}
 	
 	/* Adiciona um jogador a partida */
 	public void conectarJogador(Jogador jogador) {
+		
+		broadcastToPlayers("Jogador conectou-se");
 		jogador.getSaida().println("Bem vindo ao jogo!\nDigite o seu nome: ");
+		criarThreadJogador(jogador);
+		
 		if (jogadorUm == null) {
 			jogadorUm = jogador;
 			return; // Necessário aguardar o segundo jogador
 		}
 		jogadorDois = jogador;
-		status = Status.EM_ANDAMENTO;
+		
+		status = Status.AGUARDANDO_INICIO;
 		iniciarJogo(); // Como o jogo neste momento possui dois jogadores conectados é dado inicio a partida
+	
 	}
 
 	/* Permite que o jogador se desconecte */
@@ -51,15 +60,23 @@ public class Jogo {
 
 	/* Verifica se todos os jogadores estão prontos para iniciar a partida */
 	private void verificarInicio() {
-		if (jogadorUm.getNome() == null || jogadorDois.getNome() == null) {
+		if ((jogadorUm == null || jogadorUm.getNome() == null) ||
+			(jogadorDois == null || jogadorDois.getNome() == null)) {
 			return;
 		}
+		status = Status.INICIADO;
 		broadcastToPlayers("Partida iniciada!");
 		broadcastToPlayers("Jogue!");
 	}
 
 	/* Atualiza a jogada do objeto jogador e realiza o processamento da jogada */
 	private void realizarJogada(Jogador jogador, Jogada jogada) {
+		
+		if (status != Status.INICIADO) {
+			jogador.getSaida().println("O jogo ainda não iniciou! Aguarde o outro jogador...");
+			return;
+		}
+		
 		if (jogador.getJogada() == null) {
 			broadcastToPlayers(jogador.getNome() + " está pronto!");
 		}
@@ -81,7 +98,7 @@ public class Jogo {
 		
 		switch (jogadaJogadorUm.compararCom(jogadaJogadorDois)) {
 		case EMPATE:
-			broadcastToPlayers("Empate! Joguem novamente: ");
+			contabilizarEmpate(jogadorUm, jogadorDois);
 			break;
 			
 		case GANHOU:
@@ -94,13 +111,11 @@ public class Jogo {
 			
 		};
 		
-		
 		jogadorUm.limparJogada();
 		jogadorDois.limparJogada();
 		
-		if (rodadasRestantes > 0) {
+		if (--rodadasRestantes > 0) {
 			broadcastToPlayers(rodadasRestantes + " rodadas restantes! ");
-			rodadasRestantes--;
 		} else {
 			if (jogadorUm.getPontuacao() != jogadorDois.getPontuacao()) {
 				finalizarPartida();
@@ -119,7 +134,16 @@ public class Jogo {
 		vencedor.addToHistorico(vencedor.getJogada(), Resultado.GANHOU);
 		perdedor.addToHistorico(perdedor.getJogada(), Resultado.PERDEU);
 		
-		broadcastToPlayers(vencedor.getNome() + " ganhou!");
+		broadcastToPlayers(vencedor.getNome() + " ganhou!\n");
+		
+	}
+	
+	private void contabilizarEmpate(Jogador jogadorA, Jogador jogadorB) {
+		
+		jogadorA.addToHistorico(jogadorA.getJogada(), Resultado.EMPATE);
+		jogadorB.addToHistorico(jogadorB.getJogada(), Resultado.EMPATE);
+		
+		broadcastToPlayers("Empate!\n");
 		
 	}
 
