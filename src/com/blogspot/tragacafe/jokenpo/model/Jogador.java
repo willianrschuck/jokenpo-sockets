@@ -9,6 +9,12 @@ import java.util.List;
 import com.blogspot.tragacafe.jokenpo.enums.Jogada;
 import com.blogspot.tragacafe.jokenpo.enums.Resultado;
 
+/**
+ * Define o modelo de dados do Jogador
+ * @author Willian Ricardo Schuck, willianrschuck@gmail.com
+ * @author Eliel Alves da Silva, elielalves.cc@gmail.com
+ * @version 0.1
+ */
 public class Jogador {
 
 	private String nome;
@@ -24,17 +30,29 @@ public class Jogador {
 		this.entrada = entrada;
 		this.saida = saida;
 		this.conexao = conexao;
-		historico = new ArrayList<>();
+		this.historico = new ArrayList<>();
 	}
 
+	/**
+	 * Adiciona a jogada e o resultado ao histórico
+	 * @param jogada
+	 * @param resultado
+	 */
 	public void addToHistorico(Jogada jogada, Resultado resultado) {
 		historico.add(new HistoryEntry(jogada, resultado));
 	}
 	
+	/**
+	 * Remove a referência a jogada atual
+	 */
 	public void limparJogada() {
 		jogada = null;
 	}
 	
+	/**
+	 * Envia ao jogador o seu histórico de jogadas
+	 * com o respectivo resultado
+	 */
 	private void enviarHistorico() {
 		int i = 0; 
 		for (HistoryEntry historyEntry : historico) {
@@ -43,6 +61,10 @@ public class Jogador {
 		}
 	}
 	
+	/**
+	 * Método chamado para encerrar a conexão com o jogador
+	 * e enviar o histórico de jogadas
+	 */
 	public void desconectar() {
 		enviarHistorico();
 		try {

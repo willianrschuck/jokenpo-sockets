@@ -1,40 +1,38 @@
 package com.blogspot.tragacafe.jokenpo;
-import com.blogspot.tragacafe.jokenpo.actions.JogarAction;
-import com.blogspot.tragacafe.jokenpo.actions.QuandoProntoAction;
-import com.blogspot.tragacafe.jokenpo.actions.SairAction;
+import com.blogspot.tragacafe.jokenpo.actions.JogoActions;
 import com.blogspot.tragacafe.jokenpo.enums.Jogada;
 import com.blogspot.tragacafe.jokenpo.enums.Resultado;
 import com.blogspot.tragacafe.jokenpo.enums.Status;
 import com.blogspot.tragacafe.jokenpo.model.Jogador;
 
-public class Jogo {
+/**
+ * Classe que representa uma instância do jogo,
+ * mantém o seu status e implementa as ações de
+ * {@link JogoActions}
+ * 
+ * @author Eliel Alves da Silva, elielalves.cc@gmail.com
+ * @author Willian Ricardo Schuck, willianrschuck@gmail.com
+ * @version 0.1
+ */
+public class Jogo implements JogoActions {
+	
+	private static int TOTAL_JOGADAS = 10;
 	
 	private Status status;
 	private Jogador jogadorUm;
 	private Jogador jogadorDois;
 	
-	private int rodadasRestantes = 4;
-	
-	private QuandoProntoAction quandoProntoAction = () -> { verificarInicio(); };
-	private JogarAction jogarAction = (jogador, jogada) -> { realizarJogada(jogador, jogada); };
-	private SairAction sairAction = (jogador) -> { desconectar(jogador); };
+	private int rodadasJogadas = 0;
+	private int numeroEmpates = 0;
 	
 	public Jogo() {
 		status = Status.AGUARDANDO_JOGADORES;
 	}
 	
-	/* Cria uma thread para cada um dos jogadores.
-	 * As threads administram a entrada de dados e podem chamar
-	 * ações predefinidas dentro desta classe Jogo */
-	public void iniciarJogo() {
-		status = Status.INICIADO;
-	}
-	
-	private void criarThreadJogador(Jogador jogador) {
-		new PlayerInputThread(jogador, jogarAction, quandoProntoAction, sairAction).start();
-	}
-	
-	/* Adiciona um jogador a partida */
+	/**
+	 * Adiciona um jogador a partida 
+	 * @param jogador
+	 */
 	public void conectarJogador(Jogador jogador) {
 		
 		broadcastToPlayers("Jogador conectou-se");
@@ -51,15 +49,26 @@ public class Jogo {
 		iniciarJogo(); // Como o jogo neste momento possui dois jogadores conectados é dado inicio a partida
 	
 	}
+	
+	/**
+	 * Cria uma thread para cada um dos jogadores.
+	 * As threads administram a entrada de dados e podem chamar
+	 * ações predefinidas dentro desta classe Jogo 
+	 */
+	public void iniciarJogo() {
+		status = Status.INICIADO;
+	}
 
-	/* Permite que o jogador se desconecte */
-	private void desconectar(Jogador jogador) {
+	/** {@inheritDoc} */
+	@Override
+	public void sair(Jogador jogador) {
 		broadcastToPlayers("O jogador " + jogador.getNome() + " saiu da partida!");
 		finalizarPartida();
 	}
 
-	/* Verifica se todos os jogadores estão prontos para iniciar a partida */
-	private void verificarInicio() {
+	/** {@inheritDoc} */
+	@Override
+	public void verificarInicio() {
 		if ((jogadorUm == null || jogadorUm.getNome() == null) ||
 			(jogadorDois == null || jogadorDois.getNome() == null)) {
 			return;
@@ -69,8 +78,9 @@ public class Jogo {
 		broadcastToPlayers("Jogue!");
 	}
 
-	/* Atualiza a jogada do objeto jogador e realiza o processamento da jogada */
-	private void realizarJogada(Jogador jogador, Jogada jogada) {
+	/** {@inheritDoc} */
+	@Override
+	public void realizarJogada(Jogador jogador, Jogada jogada) {
 		
 		if (status != Status.INICIADO) {
 			jogador.getSaida().println("O jogo ainda não iniciou! Aguarde o outro jogador...");
@@ -82,6 +92,7 @@ public class Jogo {
 		}
 		jogador.setJogada(jogada);
 		processarJogada();
+		
 	}
 	
 	/* Lógica para a verificação da jogada */
@@ -114,8 +125,8 @@ public class Jogo {
 		jogadorUm.limparJogada();
 		jogadorDois.limparJogada();
 		
-		if (--rodadasRestantes > 0) {
-			broadcastToPlayers(rodadasRestantes + " rodadas restantes! ");
+		if (rodadasJogadas++ < TOTAL_JOGADAS && !ehImpossivelVirarJogo()) {
+			broadcastToPlayers((TOTAL_JOGADAS - rodadasJogadas) + " rodadas restantes! ");
 		} else {
 			if (jogadorUm.getPontuacao() != jogadorDois.getPontuacao()) {
 				finalizarPartida();
@@ -124,6 +135,16 @@ public class Jogo {
 			broadcastToPlayers("-- RODADA DE DESEMPATE --");
 		}
 		broadcastToPlayers("Jogue!");
+		
+	}
+
+	/* Verifica se o jogo já encontra-se ganho por um dos jogadores */
+	private boolean ehImpossivelVirarJogo() {
+		
+		int pontuacaoLimite = (TOTAL_JOGADAS - numeroEmpates) / 2;
+		
+		return (jogadorUm.getPontuacao() > pontuacaoLimite) || 
+			   (jogadorDois.getPontuacao() > pontuacaoLimite);
 		
 	}
 
@@ -138,10 +159,13 @@ public class Jogo {
 		
 	}
 	
+	/* Adiciona o empate ao histórico dos jogadores e incrementa o número de empates */
 	private void contabilizarEmpate(Jogador jogadorA, Jogador jogadorB) {
 		
 		jogadorA.addToHistorico(jogadorA.getJogada(), Resultado.EMPATE);
 		jogadorB.addToHistorico(jogadorB.getJogada(), Resultado.EMPATE);
+		
+		numeroEmpates++;
 		
 		broadcastToPlayers("Empate!\n");
 		
@@ -153,25 +177,40 @@ public class Jogo {
 		broadcastToPlayers("\n\n");
 		broadcastToPlayers("Partida encerrada!\n");
 		
-		broadcastToPlayers(jogadorUm.getNome() +  ": " + jogadorUm.getPontuacao() + " pontos");
-		broadcastToPlayers(jogadorDois.getNome() +  ": " + jogadorDois.getPontuacao() + " pontos");
-		
-		if (jogadorUm.getPontuacao() == jogadorDois.getPontuacao()) {
-			broadcastToPlayers("O jogo terminou em empate!");
-		} else if (jogadorUm.getPontuacao() > jogadorDois.getPontuacao()) {
-			broadcastToPlayers("O jogador " + jogadorUm.getNome() + " venceu o jogo com " + jogadorUm.getPontuacao() + "!");
-		} else {
-			broadcastToPlayers("O jogador " + jogadorDois.getNome() + " venceu o jogo com " + jogadorDois.getPontuacao() + "!");
+		if (status == Status.INICIADO) {
+			
+			broadcastToPlayers(jogadorUm.getNome() +  ": " + jogadorUm.getPontuacao() + " pontos");
+			broadcastToPlayers(jogadorDois.getNome() +  ": " + jogadorDois.getPontuacao() + " pontos");
+			
+			if (jogadorUm.getPontuacao() == jogadorDois.getPontuacao()) {
+				broadcastToPlayers("O jogo terminou em empate!");
+			} else if (jogadorUm.getPontuacao() > jogadorDois.getPontuacao()) {
+				broadcastToPlayers("O jogador " + jogadorUm.getNome() + " venceu o jogo com " + jogadorUm.getPontuacao() + " pontos!");
+			} else {
+				broadcastToPlayers("O jogador " + jogadorDois.getNome() + " venceu o jogo com " + jogadorDois.getPontuacao() + " pontos!");
+			}
+			
+			jogadorDois.desconectar();
+			jogadorUm.desconectar();
+			
 		}
-		
-		jogadorUm.desconectar();
-		jogadorDois.desconectar();
 		
 		this.status = Status.FINALIZADO;
 		
 	}
 	
-	/* Transmite uma mensagem para ambos os jogadores */
+	/**
+	 * Cria uma nova thread para receber a entrada de dados do jogador
+	 * @param jogador
+	 */
+	private void criarThreadJogador(Jogador jogador) {
+		new PlayerInputThread(jogador, this).start();
+	}
+	
+	/**
+	 * Envia a string recebida a todos os jogadores conectados
+	 * @param msg
+	 */
 	public void broadcastToPlayers(String msg) {
 		if (jogadorUm != null) {
 			jogadorUm.getSaida().println(msg);
