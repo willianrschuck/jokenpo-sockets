@@ -61,6 +61,9 @@ public class Server {
 		
 	}
 
+	/**
+	 * @return uma instância do jogo caso não haja outro em andamento
+	 */
 	private static Jogo buscarJogo() {
 		if (jogoEmEspera == null || jogoEmEspera.getStatus() == Status.FINALIZADO) {
 			jogoEmEspera = new Jogo();
