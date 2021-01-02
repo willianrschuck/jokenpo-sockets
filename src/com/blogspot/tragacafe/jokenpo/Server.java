@@ -9,14 +9,6 @@ import java.net.Socket;
 import com.blogspot.tragacafe.jokenpo.enums.Status;
 import com.blogspot.tragacafe.jokenpo.model.Jogador;
 
-/**
- * Recebe a conexão dos clientes e cria a instância do jogo
- * repassando o trabalho de comunicação para a instância criada
- * 
- * @author Eliel Alves da Silva, elielalves.cc@gmail.com
- * @author Willian Ricardo Schuck, willianrschuck@gmail.com
- * @version 0.1
- */
 public class Server {
 
 	private static final String MOTD = "    __ _____ _____ _____ _____ _____ _____ \n" + 

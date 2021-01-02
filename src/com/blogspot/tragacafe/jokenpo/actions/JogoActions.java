@@ -13,22 +13,10 @@ import com.blogspot.tragacafe.jokenpo.model.Jogador;
  */
 public interface JogoActions {
 
-	/**
-	 * Permite verificar se o jogo pode começar
-	 */
-	public void verificarInicio();
+	void verificarInicio();
 
-	/**
-	 * Defina a ação a ser chamada quando o jogador efetuar uma jogada
-	 * @param jogador
-	 * @param jogada
-	 */
 	void realizarJogada(Jogador jogador, Jogada jogada);
 
-	/**
-	 * Define a ação a ser chamada quando o jogador desejar sair da partida
-	 * @param jogador
-	 */
-	public void sair(Jogador jogador);
+	void sair(Jogador jogador);
 	
 }

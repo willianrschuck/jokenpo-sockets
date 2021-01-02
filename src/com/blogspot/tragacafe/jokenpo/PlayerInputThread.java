@@ -5,14 +5,6 @@ import com.blogspot.tragacafe.jokenpo.actions.JogoActions;
 import com.blogspot.tragacafe.jokenpo.enums.Jogada;
 import com.blogspot.tragacafe.jokenpo.model.Jogador;
 
-/**
- * Recebe as informações do cliente e chama as ações do jogo
- * de acordo com a entrada através do {@link JogoActions}}
- * 
- * @author Eliel Alves da Silva, elielalves.cc@gmail.com
- * @author Willian Ricardo Schuck, willianrschuck@gmail.com
- * @version 0.1
- */
 public class PlayerInputThread extends Thread {
 
 	private static final String SAIR = "sair";
